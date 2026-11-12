@@ -1,0 +1,14 @@
+name: custom:mongodb-query
+version: 0.1.39
+minDynatraceVersion: "1.285"
+author:
+  name: "MongoDB Custom Query"
+
+python:
+  runtime:
+    module: mongodb_custom_query
+    version:
+      min: "3.10"
+  activation:
+    remote:
+      path: activationSchema.json

@@ -1,0 +1,16 @@
+{
+  "types": [
+    {
+      "name": "custom:mongodb-query",
+      "displayName": "MongoDB Custom Query",
+      "enabled": true,
+      "iconPattern": "database",
+      "properties": [
+        {
+          "id": "id",
+          "displayName": "ID"
+        }
+      ]
+    }
+  ]
+}

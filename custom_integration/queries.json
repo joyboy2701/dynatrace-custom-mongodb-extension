@@ -1,0 +1,236 @@
+[
+  {
+    "name": "connection_test",
+    "enabled": true,
+    "frequency_minutes": 1,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "test_value"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$limit": 1
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "test_value": {
+            "$literal": 1
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "orders_by_status",
+    "enabled": true,
+    "frequency_minutes": 1,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "status"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$group": {
+          "_id": "$status",
+          "order_count": {
+            "$sum": 1
+          },
+          "total_amount": {
+            "$sum": "$amount"
+          },
+          "avg_amount": {
+            "$avg": "$amount"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "status": "$_id",
+          "order_count": 1,
+          "total_amount": 1,
+          "avg_amount": {
+            "$round": [
+              "$avg_amount",
+              2
+            ]
+          }
+        }
+      },
+      {
+        "$sort": {
+          "status": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "orders_by_region",
+    "enabled": true,
+    "frequency_minutes": 5,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "region"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$group": {
+          "_id": "$region",
+          "order_count": {
+            "$sum": 1
+          },
+          "total_amount": {
+            "$sum": "$amount"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "region": "$_id",
+          "order_count": 1,
+          "total_amount": 1
+        }
+      },
+      {
+        "$sort": {
+          "region": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "recent_orders",
+    "enabled": true,
+    "frequency_minutes": 1,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "id"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$sort": {
+          "created_at": -1
+        }
+      },
+      {
+        "$limit": 10
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "id": 1,
+          "status": 1,
+          "amount": 1,
+          "customer_name": 1,
+          "region": 1,
+          "created_at": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "pending_orders_summary",
+    "enabled": true,
+    "frequency_minutes": 1,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "status"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$match": {
+          "status": "PENDING"
+        }
+      },
+      {
+        "$group": {
+          "_id": "$status",
+          "pending_count": {
+            "$sum": 1
+          },
+          "pending_total": {
+            "$sum": "$amount"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "status": "$_id",
+          "pending_count": 1,
+          "pending_total": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "orders_last_hour",
+    "enabled": true,
+    "frequency_minutes": 5,
+    "dedup": {
+      "enabled": true,
+      "mode": "send_on_change",
+      "key_fields": [
+        "orders_last_hour"
+      ]
+    },
+    "collection": "dt_demo_orders",
+    "pipeline": [
+      {
+        "$match": {
+          "$expr": {
+            "$gte": [
+              "$created_at",
+              {
+                "$subtract": [
+                  "$$NOW",
+                  3600000
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$group": {
+          "_id": null,
+          "orders_last_hour": {
+            "$sum": 1
+          },
+          "amount_last_hour": {
+            "$sum": "$amount"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "orders_last_hour": 1,
+          "amount_last_hour": 1
+        }
+      }
+    ]
+  }
+]

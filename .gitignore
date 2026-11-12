@@ -1,0 +1,21 @@
+.env
+.venv/
+collector_state.db
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+
+# Extension build output
+custom_integration/dist/
+custom_integration/build/
+custom_integration/extension/lib/
+custom_integration/**/*.egg-info/
+
+# IDE
+.vscode/
+.cursor/
+.history/
+
+# Dynatrace local tooling
+dist/

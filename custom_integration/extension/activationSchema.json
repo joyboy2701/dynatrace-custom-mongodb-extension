@@ -1,0 +1,367 @@
+{
+  "types": {
+    "pythonRemote": {
+      "type": "object",
+      "properties": {
+        "endpoints": {
+          "displayName": "MongoDB endpoints",
+          "type": "list",
+          "items": {
+            "type": {
+              "$ref": "#/types/dynatrace.datasource.python:mongodb-custom-query-endpoint"
+            }
+          },
+          "nullable": false,
+          "minItems": 1,
+          "maxItems": 10,
+          "metaData": {
+            "addItemButton": "Add MongoDB endpoint"
+          }
+        }
+      }
+    },
+    "dynatrace.datasource.python:mongodb-custom-query-endpoint": {
+      "type": "object",
+      "displayName": "MongoDB endpoint",
+      "summaryPattern": "MongoDB {host}:{port}/{database_name}",
+      "properties": {
+        "host": {
+          "displayName": "Host",
+          "type": "text",
+          "nullable": false,
+          "default": "",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ],
+          "maxItems": 1
+        },
+        "port": {
+          "displayName": "Port",
+          "type": "integer",
+          "nullable": false,
+          "default": 27017,
+          "maxItems": 1
+        },
+        "use_credential_vault": {
+          "displayName": "Use Credential Vault",
+          "description": "Use username and password from Dynatrace Credential Vault. Disable this to enter username and password manually.",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "credentialVaultId": {
+          "displayName": "Database credentials",
+          "description": "Select MongoDB username/password credentials from Dynatrace Credential Vault.",
+          "type": "text",
+          "subType": "credential",
+          "referencedType": "USERNAME_PASSWORD",
+          "nullable": true,
+          "constraints": [
+            {
+              "type": "NOT_BLANK"
+            }
+          ],
+          "maxItems": 1,
+          "precondition": {
+            "type": "EQUALS",
+            "property": "use_credential_vault",
+            "expectedValue": true
+          }
+        },
+        "username": {
+          "displayName": "User",
+          "description": "MongoDB username. Used only when Credential Vault is disabled.",
+          "type": "text",
+          "nullable": false,
+          "default": "",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 500
+            }
+          ],
+          "maxItems": 1,
+          "precondition": {
+            "type": "EQUALS",
+            "property": "use_credential_vault",
+            "expectedValue": false
+          }
+        },
+        "password": {
+          "displayName": "Password",
+          "description": "MongoDB password. Used only when Credential Vault is disabled.",
+          "type": "secret",
+          "nullable": false,
+          "default": "",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 500
+            }
+          ],
+          "maxItems": 1,
+          "precondition": {
+            "type": "EQUALS",
+            "property": "use_credential_vault",
+            "expectedValue": false
+          }
+        },
+        "send_summary_log_when_all_rows_deduped": {
+          "displayName": "Send summary when dedup skips all rows",
+          "description": "When enabled, the extension sends a summary log even when dedup skips all returned rows. This confirms the query is running successfully.",
+          "type": "boolean",
+          "nullable": true,
+          "maxItems": 1
+        },
+        "query_timeout_seconds": {
+          "displayName": "Query timeout (seconds)",
+          "type": "integer",
+          "nullable": false,
+          "default": 10,
+          "maxItems": 1
+        },
+        "max_rows_per_query": {
+          "displayName": "Max rows per query",
+          "description": "Maximum documents ingested per query execution. Default in extension: 1000",
+          "type": "integer",
+          "nullable": true,
+          "maxItems": 1
+        },
+        "result_mode": {
+          "displayName": "Default result mode",
+          "description": "row_per_result or nested_json. Default in extension: row_per_result",
+          "type": "text",
+          "nullable": true,
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 50
+            }
+          ],
+          "maxItems": 1
+        },
+        "log_source": {
+          "displayName": "log.source value",
+          "type": "text",
+          "nullable": false,
+          "default": "mongodb_custom_query",
+          "maxItems": 1
+        },
+        "dedup_enabled": {
+          "displayName": "Enable dedup",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "run_due_only": {
+          "displayName": "Respect frequency_minutes",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "queries": {
+          "displayName": "MongoDB queries",
+          "description": "Add query rows here, or leave empty and use Advanced: queries JSON",
+          "type": "list",
+          "items": {
+            "type": {
+              "$ref": "#/types/dynatrace.datasource.python:mongodb-custom-query-query"
+            }
+          },
+          "nullable": true,
+          "minItems": 0,
+          "maxItems": 50,
+          "metaData": {
+            "addItemButton": "Add MongoDB query"
+          }
+        },
+        "queries_json": {
+          "displayName": "Advanced: queries JSON",
+          "description": "Used when MongoDB queries list is empty. Paste the queries.json array as a single-line JSON string.",
+          "type": "text",
+          "nullable": true,
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 100000
+            }
+          ],
+          "maxItems": 1
+        },
+        "database_name": {
+          "displayName": "Database name",
+          "type": "text",
+          "nullable": false,
+          "default": "",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          ],
+          "maxItems": 1,
+          "description": "MongoDB database containing the queried collections."
+        },
+        "auth_source": {
+          "displayName": "Authentication database",
+          "type": "text",
+          "nullable": true,
+          "maxItems": 1
+        },
+        "tls": {
+          "displayName": "Enable TLS",
+          "type": "boolean",
+          "nullable": true,
+          "maxItems": 1
+        },
+        "tls_ca_file": {
+          "displayName": "TLS CA certificate file",
+          "type": "text",
+          "nullable": true,
+          "maxItems": 1
+        }
+      }
+    },
+    "dynatrace.datasource.python:mongodb-custom-query-query": {
+      "type": "object",
+      "displayName": "MongoDB query",
+      "summaryPattern": "Query {name}",
+      "properties": {
+        "name": {
+          "displayName": "Query name",
+          "description": "Unique identifier used in logs as query.name",
+          "type": "text",
+          "nullable": false,
+          "default": "",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ],
+          "maxItems": 1
+        },
+        "enabled": {
+          "displayName": "Enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "frequency_minutes_value": {
+          "displayName": "Frequency (minutes)",
+          "description": "Allowed values: 1, 5, 10, 15, 30, 60. Used when Respect frequency_minutes is enabled.",
+          "type": "text",
+          "nullable": false,
+          "default": "1",
+          "constraints": [
+            {
+              "type": "PATTERN",
+              "pattern": "^(1|5|10|15|30|60)$",
+              "customMessage": "Allowed values are only: 1, 5, 10, 15, 30, 60."
+            }
+          ],
+          "maxItems": 1
+        },
+        "result_mode": {
+          "displayName": "Result mode override",
+          "description": "Optional. row_per_result or nested_json. Omit to use endpoint default.",
+          "type": "text",
+          "nullable": true,
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 50
+            }
+          ],
+          "maxItems": 1
+        },
+        "dedup_enabled": {
+          "displayName": "Dedup enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "dedup_mode": {
+          "displayName": "Dedup mode",
+          "description": "send_on_change or send_once",
+          "type": "text",
+          "nullable": false,
+          "default": "send_on_change",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          ],
+          "maxItems": 1
+        },
+        "dedup_key_fields": {
+          "displayName": "Dedup key fields",
+          "description": "Optional. Comma-separated document field names, e.g. id or status, region",
+          "type": "text",
+          "nullable": true,
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "maxLength": 500
+            }
+          ],
+          "maxItems": 1
+        },
+        "collection": {
+          "displayName": "Collection",
+          "type": "text",
+          "nullable": false,
+          "default": "",
+          "maxItems": 1
+        },
+        "pipeline": {
+          "displayName": "Aggregation pipeline (JSON)",
+          "description": "Read-only aggregation pipeline array. Use [] to return collection documents. $out and $merge are blocked.",
+          "type": "text",
+          "nullable": false,
+          "default": "[]",
+          "constraints": [
+            {
+              "type": "LENGTH",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          ],
+          "maxItems": 1
+        }
+      }
+    }
+  },
+  "dynatrace": "1",
+  "description": "MongoDB custom query collector \u2014 read-only queries to Grail logs",
+  "schemaId": "mongodb-custom-query.activation",
+  "displayName": "MongoDB Custom Query",
+  "ownerProductManagement": "Syed Abdul Rehman",
+  "ownerDevelopment": "Syed Abdul Rehman",
+  "maturity": "GENERAL_AVAILABILITY",
+  "allowedScopes": [
+    "environment"
+  ],
+  "multiObject": false,
+  "properties": {
+    "pythonRemote": {
+      "displayName": "MongoDB Custom Query",
+      "type": {
+        "$ref": "#/types/pythonRemote"
+      }
+    }
+  }
+}

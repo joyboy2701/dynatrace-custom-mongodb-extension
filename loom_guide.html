@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loom Recording Guide — PostgreSQL Custom SQL → Dynatrace</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #171a23;
+    --panel-2: #1e2230;
+    --border: #2a2f3e;
+    --text: #e6e8ee;
+    --muted: #9aa3b2;
+    --accent: #6ea8fe;
+    --accent-2: #7ee787;
+    --warn: #ffb454;
+    --danger: #ff6b6b;
+    --code-bg: #0b0d13;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 290px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 22px 18px;
+  }
+  .sidebar h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .sidebar ol { list-style: none; margin: 0; padding: 0; counter-reset: scene; }
+  .sidebar li { margin: 2px 0; }
+  .sidebar a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .sidebar a:hover { background: var(--panel-2); text-decoration: none; }
+  .sidebar a .num {
+    display: inline-block;
+    width: 22px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .sidebar .group-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 16px 0 6px 10px;
+  }
+
+  /* Main */
+  .main { flex: 1; min-width: 0; }
+  .content { max-width: 900px; margin: 0 auto; padding: 36px 40px 120px; }
+
+  header.hero {
+    background: linear-gradient(135deg, #1a2342, #161a26);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 30px;
+    margin-bottom: 30px;
+  }
+  header.hero h1 { margin: 0 0 8px; font-size: 26px; }
+  header.hero p { margin: 4px 0; color: var(--muted); }
+  .badges { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .badge.accent { border-color: var(--accent); color: var(--accent); }
+  .badge.green { border-color: var(--accent-2); color: var(--accent-2); }
+
+  section.scene {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    scroll-margin-top: 16px;
+  }
+  section.scene > h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .scene-num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .scene-time {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  section.scene h3 { font-size: 15px; margin: 18px 0 8px; color: var(--text); }
+
+  .say {
+    border-left: 3px solid var(--accent);
+    background: rgba(110,168,254,0.08);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-style: italic;
+    color: #cdd6e4;
+  }
+  .say::before { content: "🎙 Say: "; font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .note {
+    border-left: 3px solid var(--warn);
+    background: rgba(255,180,84,0.08);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    color: #e9ddc7;
+  }
+  .note::before { content: "Note "; font-weight: 600; color: var(--warn); }
+
+  /* Code blocks */
+  .code {
+    position: relative;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  .code pre {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #d7e0f0;
+    white-space: pre;
+  }
+  .code .lang {
+    position: absolute;
+    top: 8px; left: 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .code pre.with-lang { padding-top: 26px; }
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  .copy-btn.copied { color: var(--accent-2); border-color: var(--accent-2); }
+
+  code.inline {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--accent-2);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  td code, th code { background: transparent; border: none; padding: 0; color: var(--accent-2); }
+
+  /* Checklist */
+  ul.check { list-style: none; padding: 0; margin: 10px 0; }
+  ul.check li { padding: 5px 0 5px 28px; position: relative; }
+  ul.check li::before {
+    content: "☐";
+    position: absolute; left: 0; top: 4px;
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  ul.plain { margin: 8px 0; padding-left: 22px; }
+  ul.plain li { margin: 4px 0; }
+
+  .arch {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--accent-2);
+    white-space: pre;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  hr.div { border: none; border-top: 1px solid var(--border); margin: 26px 0; }
+
+  .pill-danger { color: var(--danger); }
+
+  footer.foot {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 30px 0 10px;
+  }
+
+  /* Progress bar */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--accent); width: 0%;
+    z-index: 50;
+  }
+
+  @media (max-width: 860px) {
+    .sidebar { display: none; }
+    .content { padding: 24px 18px 90px; }
+  }
+  @media print {
+    .sidebar, .copy-btn, #progress { display: none; }
+    body { background: #fff; color: #000; }
+    section.scene, header.hero, .code { border-color: #ccc; background: #fff; break-inside: avoid; }
+    .code pre, .arch { color: #111; background: #f4f4f4; }
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="layout">
+  <nav class="sidebar">
+    <h2>Loom Script</h2>
+    <div class="group-label">Before recording</div>
+    <ol>
+      <li><a href="#preflight"><span class="num">0</span>Pre-flight</a></li>
+      <li><a href="#layout"><span class="num">·</span>Screen layout</a></li>
+    </ol>
+    <div class="group-label">Scenes</div>
+    <ol>
+      <li><a href="#scene1"><span class="num">1</span>Intro</a></li>
+      <li><a href="#scene2"><span class="num">2</span>API token</a></li>
+      <li><a href="#scene3"><span class="num">3</span>Install ActiveGate</a></li>
+      <li><a href="#scene4"><span class="num">4</span>Verify network</a></li>
+      <li><a href="#scene5"><span class="num">5</span>Repo + seed data</a></li>
+      <li><a href="#scene6"><span class="num">6</span>Certificates</a></li>
+      <li><a href="#scene7"><span class="num">7</span>Build + upload</a></li>
+      <li><a href="#scene8"><span class="num">8</span>Monitoring config</a></li>
+      <li><a href="#scene9"><span class="num">9</span>Verify in Grail</a></li>
+      <li><a href="#scene10"><span class="num">10</span>Wrap-up</a></li>
+    </ol>
+    <div class="group-label">Reference</div>
+    <ol>
+      <li><a href="#cheats"><span class="num">!</span>Failure cheats</a></li>
+      <li><a href="#timing"><span class="num">⏱</span>Timing</a></li>
+    </ol>
+  </nav>
+
+  <main class="main">
+    <div class="content">
+      <header class="hero">
+        <h1>Loom Recording Guide</h1>
+        <p>PostgreSQL Custom SQL → Dynatrace Grail logs (Extension 2.0)</p>
+        <p>Fresh Linux box (with <code class="inline">psql</code>) hosts the ActiveGate, builds &amp; uploads the extension into a fresh Dynatrace account.</p>
+        <div class="badges">
+          <span class="badge accent">custom:postgres-custom-sql 0.1.13</span>
+          <span class="badge green">log.source = oracle_custom_sql</span>
+          <span class="badge">~30–35 min filmed</span>
+        </div>
+      </header>
+
+      <div class="arch">PostgreSQL ──SQL(5432)──► ActiveGate (this Linux box) ──logs(443)──► Dynatrace Grail
+                                                       log.source = oracle_custom_sql</div>
+
+      <div class="note">Assumes PostgreSQL is reachable from the Linux box. If the DB runs on the same box use <code class="inline">DB_HOST=localhost</code>; if remote, use its IP. Replace <code class="inline">xxxxx</code>, <code class="inline">YOUR_PG_HOST</code> with your values.</div>
+
+      <!-- PREFLIGHT -->
+      <section class="scene" id="preflight">
+        <h2><span class="scene-num">0</span> Pre-flight (do BEFORE recording)</h2>
+        <ul class="check">
+          <li>Fresh Dynatrace tenant URL: <code class="inline">https://xxxxx.live.dynatrace.com</code></li>
+          <li>Logged into Dynatrace in a browser</li>
+          <li>SSH access to the Linux box</li>
+          <li>PostgreSQL host / port / user that can create a table + password</li>
+          <li>DB values decided: <code class="inline">DB_HOST</code>, <code class="inline">DB_NAME=demo</code>, <code class="inline">DB_USER=dtuser</code></li>
+          <li>Linux box has <code class="inline">git</code>, <code class="inline">python3</code>, <code class="inline">psql</code>, <code class="inline">nc</code>, <code class="inline">wget</code></li>
+        </ul>
+        <h3>Quick check on the Linux box</h3>
+        <div class="code"><button class="copy-btn">Copy</button><pre>git --version && python3 --version && psql --version && which wget nc</pre></div>
+      </section>
+
+      <!-- LAYOUT -->
+      <section class="scene" id="layout">
+        <h2><span class="scene-num">·</span> Recording screen layout</h2>
+        <table>
+          <tr><th>Record this</th><th>Keep on 2nd screen (not recorded)</th></tr>
+          <tr><td>Terminal (SSH to Linux box) + Dynatrace browser</td><td>This guide / GitHub README</td></tr>
+        </table>
+      </section>
+
+      <!-- SCENE 1 -->
+      <section class="scene" id="scene1">
+        <h2><span class="scene-num">1</span> Intro <span class="scene-time">~45 sec</span></h2>
+        <div class="say">I'm deploying a custom PostgreSQL SQL extension to Dynatrace. On this fresh Linux machine I'll install an Environment ActiveGate, then build and upload an Extension 2.0 that runs read-only SQL against Postgres and ships results to Grail as structured logs. Fresh tenant, end to end.</div>
+      </section>
+
+      <!-- SCENE 2 -->
+      <section class="scene" id="scene2">
+        <h2><span class="scene-num">2</span> Create API token <span class="scene-time">~2 min</span></h2>
+        <ul class="plain">
+          <li><strong>Settings → Integration → Dynatrace API → Generate token</strong> (or <strong>Access tokens → Generate new token</strong>)</li>
+          <li>Name: <code class="inline">extension-upload</code></li>
+          <li>Add scopes:
+            <ul class="plain">
+              <li><code class="inline">extensions.write</code> — required</li>
+              <li><code class="inline">extensions.read</code> — recommended</li>
+            </ul>
+          </li>
+          <li>Generate → copy the token (starts with <code class="inline">dt0c01.</code>)</li>
+        </ul>
+        <div class="say">These are the Extensions 2.0 scopes — write and read extensions. The old PluginUpload scope is for Extensions 1.0 and won't work.</div>
+      </section>
+
+      <!-- SCENE 3 -->
+      <section class="scene" id="scene3">
+        <h2><span class="scene-num">3</span> Install Environment ActiveGate <span class="scene-time">~6 min</span></h2>
+        <h3>In the browser</h3>
+        <ul class="plain">
+          <li><strong>Deploy Dynatrace → ActiveGates → Download ActiveGate</strong></li>
+          <li>Type: <strong>Environment ActiveGate</strong>, OS: <strong>Linux</strong>, arch <strong>x86-64</strong></li>
+          <li>Copy the one-line <code class="inline">wget … .sh</code> install command</li>
+        </ul>
+        <h3>On the Linux box</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang"># paste the command from the UI (token embedded in the URL):
+wget -O Dynatrace-ActiveGate-Linux.sh "https://xxxxx.live.dynatrace.com/api/v1/deployment/installer/gateway/unix/latest?arch=x86&..."
+
+chmod +x Dynatrace-ActiveGate-Linux.sh
+sudo ./Dynatrace-ActiveGate-Linux.sh</pre></div>
+        <h3>Verify services</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">sudo systemctl status dynatracegateway
+sudo systemctl status dynatraceremotepluginmodule</pre></div>
+        <div class="note">Both should be <code class="inline">active (running)</code>. In the browser, the new gate shows <strong>Connected</strong> under Deploy Dynatrace → ActiveGates. Note its name.</div>
+      </section>
+
+      <!-- SCENE 4 -->
+      <section class="scene" id="scene4">
+        <h2><span class="scene-num">4</span> Verify network to PostgreSQL <span class="scene-time">~1 min</span></h2>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang"># remote DB:
+nc -zv YOUR_PG_HOST 5432
+# or if Postgres is on this box:
+nc -zv localhost 5432</pre></div>
+        <div class="say">The ActiveGate must reach Postgres — confirming the path before we go further.</div>
+      </section>
+
+      <!-- SCENE 5 -->
+      <section class="scene" id="scene5">
+        <h2><span class="scene-num">5</span> Get the repo + seed demo data <span class="scene-time">~3 min</span></h2>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">git clone https://github.com/Abyshah/postgres-custom-sql-dynatrace.git
+cd postgres-custom-sql-dynatrace
+
+chmod +x scripts/seed_demo_data.sh
+export DB_HOST=YOUR_PG_HOST     # or localhost
+export DB_USER=dtuser
+export DB_NAME=demo
+
+./scripts/seed_demo_data.sh     # prompts for DB password</pre></div>
+        <h3>Verify</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">psql -h "$DB_HOST" -U dtuser -d demo -c \
+  "SELECT status, count(*) FROM dt_demo_orders GROUP BY status ORDER BY status;"</pre></div>
+        <div class="say">Here's the seeded demo orders — pending, success and failed rows.</div>
+      </section>
+
+      <!-- SCENE 6 -->
+      <section class="scene" id="scene6">
+        <h2><span class="scene-num">6</span> Python env + signing certificates <span class="scene-time">~5 min</span></h2>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+dt-sdk gencerts
+ls -la ~/.dynatrace/certificates/</pre></div>
+
+        <h3>6a — Upload CA to Dynatrace Credential Vault (browser)</h3>
+        <ul class="plain">
+          <li>Search <strong>Credential vault → Add credential</strong></li>
+          <li>Type: <strong>Public certificate</strong>, Scope: <strong>Extension validation</strong></li>
+          <li>Upload <code class="inline">~/.dynatrace/certificates/ca.pem</code></li>
+        </ul>
+        <div class="note">Headless box? Pull the file to your laptop to upload it: <code class="inline">scp user@box:~/.dynatrace/certificates/ca.pem .</code></div>
+
+        <h3>6b — Same CA onto this ActiveGate</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">sudo mkdir -p /var/lib/dynatrace/remotepluginmodule/agent/conf/certificates
+sudo cp ~/.dynatrace/certificates/ca.pem \
+  /var/lib/dynatrace/remotepluginmodule/agent/conf/certificates/root.pem
+sudo chmod 644 /var/lib/dynatrace/remotepluginmodule/agent/conf/certificates/root.pem
+sudo systemctl restart dynatraceremotepluginmodule</pre></div>
+        <div class="say">Vault CA and the ActiveGate root.pem are the same file — that's what makes the signature trusted.</div>
+      </section>
+
+      <!-- SCENE 7 -->
+      <section class="scene" id="scene7">
+        <h2><span class="scene-num">7</span> Build + upload the extension <span class="scene-time">~3 min</span></h2>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">chmod +x scripts/build_custom_integration.sh
+./scripts/build_custom_integration.sh
+ls -la custom_integration/dist/</pre></div>
+        <h3>Set credentials &amp; upload</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">cp .env.example .env
+# edit .env: DT_ENV_URL + DT_API_TOKEN (token from Scene 2)
+nano .env
+
+./scripts/upload_extension.sh</pre></div>
+        <div class="note">Expect <code class="inline">Extension upload successful!</code>. Verify in <strong>Hub → Extensions → PostgreSQL Custom SQL</strong> (<code class="inline">custom:postgres-custom-sql</code> <strong>0.1.13</strong>).</div>
+      </section>
+
+      <!-- SCENE 8 -->
+      <section class="scene" id="scene8">
+        <h2><span class="scene-num">8</span> Monitoring configuration <span class="scene-time">~5 min</span></h2>
+        <p>On the extension page → <strong>Add monitoring configuration</strong>.</p>
+        <ul class="plain">
+          <li><strong>Scope:</strong> Environment; <strong>ActiveGate group:</strong> the gate from Scene 3</li>
+        </ul>
+        <h3>Endpoint</h3>
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Host</td><td>your Postgres host</td></tr>
+          <tr><td>Port</td><td><code>5432</code></td></tr>
+          <tr><td>Database</td><td><code>demo</code></td></tr>
+          <tr><td>User</td><td><code>dtuser</code></td></tr>
+          <tr><td>Password</td><td>DB password</td></tr>
+          <tr><td>Query timeout (seconds)</td><td><code>10</code></td></tr>
+          <tr><td>log.source value</td><td><code>oracle_custom_sql</code></td></tr>
+          <tr><td>Enable dedup</td><td><code>true</code></td></tr>
+          <tr><td>Respect frequency_minutes</td><td><code>false</code> (demo: log every cycle)</td></tr>
+        </table>
+        <h3>Queries — fast path (on the Linux box)</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">./scripts/export_queries_json.sh</pre></div>
+        <p>Copy the one-line output → paste into <strong>Advanced: queries JSON</strong> (leave the SQL list empty). Then <strong>Save</strong> → wait for status <strong>OK</strong>.</p>
+        <div class="say">SQL is plain SELECT text — no wrapping quotes.</div>
+      </section>
+
+      <!-- SCENE 9 -->
+      <section class="scene" id="scene9">
+        <h2><span class="scene-num">9</span> Verify in Grail <span class="scene-time">~3 min</span></h2>
+        <p>Browser → <strong>Notebooks</strong> (or <strong>Logs</strong>), time range last 15 min.</p>
+        <div class="code"><span class="lang">dql</span><button class="copy-btn">Copy</button><pre class="with-lang">fetch logs, from: now()-15m
+| filter `log.source` == "oracle_custom_sql"
+| fields timestamp, `query.name`, `query.status`, `error.message`
+| sort timestamp desc
+| limit 30</pre></div>
+        <div class="say">Here's success status for connection_test, orders_by_status and the rest.</div>
+        <h3>Show real data</h3>
+        <div class="code"><span class="lang">dql</span><button class="copy-btn">Copy</button><pre class="with-lang">fetch logs, from: now()-15m
+| filter `query.name` == "orders_by_status"
+| fields timestamp, `result.status`, `result.order_count`, `result.total_amount`</pre></div>
+        <h3>Optional — live proof (insert a row, watch it appear)</h3>
+        <div class="code"><span class="lang">bash</span><button class="copy-btn">Copy</button><pre class="with-lang">psql -h "$DB_HOST" -U dtuser -d demo -c \
+  "INSERT INTO dt_demo_orders (status, amount, customer_name, region) VALUES ('PENDING', 500.00, 'LoomDemo', 'eu-west-1');"</pre></div>
+        <p>Re-run the DQL after ~1–2 min.</p>
+      </section>
+
+      <!-- SCENE 10 -->
+      <section class="scene" id="scene10">
+        <h2><span class="scene-num">10</span> Wrap-up <span class="scene-time">~30 sec</span></h2>
+        <div class="say">Fresh box to working extension: ActiveGate installed, certs trusted, extension uploaded and signed, monitoring configured, and structured Postgres logs landing in Grail. A colleague can repeat this from the repo README.</div>
+      </section>
+
+      <hr class="div" />
+
+      <!-- CHEATS -->
+      <section class="scene" id="cheats">
+        <h2><span class="scene-num">!</span> On-camera failure cheats</h2>
+        <table>
+          <tr><th>If you see</th><th>Do this live</th></tr>
+          <tr><td>Upload <span class="pill-danger">403</span></td><td>Token missing <code>extensions.write</code> — regenerate</td></tr>
+          <tr><td>Signature failed on AG</td><td>Vault <code>ca.pem</code> ≠ AG <code>root.pem</code>; recopy + restart <code>dynatraceremotepluginmodule</code></td></tr>
+          <tr><td>No logs</td><td>Recheck <code>nc -zv host 5432</code> from this box; confirm AG group in config</td></tr>
+          <tr><td>SQL <code>unterminated quoted identifier</code></td><td>Remove <code>"</code> around SQL in UI</td></tr>
+          <tr><td>Upload URL/host error</td><td>Use <code>live.dynatrace.com</code>, not <code>apps.dynatrace.com</code></td></tr>
+        </table>
+      </section>
+
+      <!-- TIMING -->
+      <section class="scene" id="timing">
+        <h2><span class="scene-num">⏱</span> Timing</h2>
+        <p>Total ≈ <strong>30–35 min</strong> filmed (longer if AG install is slow). For a shorter video, do Scenes 2–6 off-camera and start recording at Scene 5 or 7.</p>
+      </section>
+
+      <footer class="foot">
+        PostgreSQL Custom SQL → Dynatrace · Made by Syed Abdul Rehman
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var text = pre ? pre.innerText : '';
+      navigator.clipboard.writeText(text).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = old; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  });
+
+  // Scroll progress bar
+  var bar = document.getElementById('progress');
+  window.addEventListener('scroll', function () {
+    var h = document.documentElement;
+    var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = scrolled + '%';
+  });
+
+  // Highlight active section in sidebar
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar a'));
+  var sections = links.map(function (l) { return document.querySelector(l.getAttribute('href')); });
+  window.addEventListener('scroll', function () {
+    var pos = window.scrollY + 120;
+    var current = null;
+    sections.forEach(function (sec, i) {
+      if (sec && sec.offsetTop <= pos) current = links[i];
+    });
+    links.forEach(function (l) { l.style.background = ''; });
+    if (current) current.style.background = 'var(--panel-2)';
+  });
+</script>
+</body>
+</html>
