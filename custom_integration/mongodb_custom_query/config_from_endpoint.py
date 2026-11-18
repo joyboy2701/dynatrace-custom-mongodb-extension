@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-from mongodb_custom_query.collector_core import validate_config
+from mongodb_custom_query.collector_core import ALLOWED_FREQUENCIES_MINUTES, validate_config
 from mongodb_custom_query.query_config import parse_queries_from_endpoint
 
 
@@ -99,7 +99,7 @@ def config_from_endpoint(endpoint: Dict[str, Any]) -> Dict[str, Any]:
             ),
             "send_error_log": True,
             "run_due_only": _endpoint_bool(endpoint, "run_due_only", True),
-            "allowed_frequencies_minutes": [1, 5, 10, 15, 30, 60],
+            "allowed_frequencies_minutes": ALLOWED_FREQUENCIES_MINUTES,
             "dedup": {
                 "enabled": _endpoint_bool(endpoint, "dedup_enabled", True),
                 "default_mode": endpoint.get("dedup_default_mode", "send_on_change"),

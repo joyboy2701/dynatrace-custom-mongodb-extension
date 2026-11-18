@@ -14,6 +14,12 @@ from bson.decimal128 import Decimal128
 from bson.objectid import ObjectId
 
 COLLECTOR_VERSION = "0.5.2"
+WEEKLY_FREQUENCY = 10080
+MONTHLY_FREQUENCY = 43200
+ALLOWED_FREQUENCIES_MINUTES = [
+    1, 5, 10, 15, 30, 60, 120, 180, 240, 360, 480, 720, 1440,
+    WEEKLY_FREQUENCY, MONTHLY_FREQUENCY,
+]
 
 # Dynatrace SDK RFC3339 (no fractional seconds); matches extension metric/event timestamps.
 _LOG_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -257,13 +263,13 @@ def should_run_query(query_config: Dict[str, Any], collector_config: Dict[str, A
       every enabled query runs every time the script runs.
 
     If run_due_only=true:
-      each query runs when elapsed time since last actual run
-      is greater than or equal to frequency_minutes.
+      hourly and calendar frequencies run during minute 05 of their scheduled UTC hour.
+      shorter frequencies use elapsed time since the last run.
     """
 
     allowed_frequencies = collector_config.get(
         "allowed_frequencies_minutes",
-        [1, 5, 10, 15, 30, 60],
+        ALLOWED_FREQUENCIES_MINUTES,
     )
 
     raw_frequency = query_config.get("frequency_minutes", 1)
@@ -290,6 +296,26 @@ def should_run_query(query_config: Dict[str, Any], collector_config: Dict[str, A
         return True
 
     query_name = query_config["name"]
+
+    if frequency_minutes >= 60 and frequency_minutes % 60 == 0:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        if now.minute != 5:
+            return False
+
+        if frequency_minutes == WEEKLY_FREQUENCY:
+            scheduled_hour = now.weekday() == 0 and now.hour == 0
+        elif frequency_minutes == MONTHLY_FREQUENCY:
+            scheduled_hour = now.day == 1 and now.hour == 0
+        else:
+            scheduled_hour = now.hour % (frequency_minutes // 60) == 0
+
+        if not scheduled_hour:
+            return False
+
+        scheduled_at = now.replace(second=0, microsecond=0)
+        last_ran_at = get_query_last_ran_at(collector_config, query_name)
+        return last_ran_at is None or last_ran_at < scheduled_at
+
     last_ran_at = get_query_last_ran_at(collector_config, query_name)
 
     if last_ran_at is None:

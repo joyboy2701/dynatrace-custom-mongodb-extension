@@ -1,4 +1,22 @@
 {
+  "enums": {
+    "QueryFrequency": {
+      "type": "enum",
+      "items": [
+        { "value": "1", "displayName": "1 minute" },
+        { "value": "5", "displayName": "5 minutes" },
+        { "value": "10", "displayName": "10 minutes" },
+        { "value": "15", "displayName": "15 minutes" },
+        { "value": "30", "displayName": "30 minutes" },
+        { "value": "60", "displayName": "1 hour" },
+        { "value": "180", "displayName": "3 hours" },
+        { "value": "480", "displayName": "8 hours" },
+        { "value": "1440", "displayName": "24 hours" },
+        { "value": "10080", "displayName": "1 week" },
+        { "value": "43200", "displayName": "1 month" }
+      ]
+    }
+  },
   "types": {
     "pythonRemote": {
       "type": "object",
@@ -246,18 +264,13 @@
           "maxItems": 1
         },
         "frequency_minutes_value": {
-          "displayName": "Frequency (minutes)",
-          "description": "Allowed values: 1, 5, 10, 15, 30, 60. Used when Respect frequency_minutes is enabled.",
-          "type": "text",
+          "displayName": "Frequency",
+          "description": "When Respect frequency_minutes is enabled, hourly schedules run at minute 05 UTC. Weekly runs are Mondays at 00:05 UTC. Monthly runs are on the first day of the month at 00:05 UTC.",
+          "type": {
+            "$ref": "#/enums/QueryFrequency"
+          },
           "nullable": false,
           "default": "1",
-          "constraints": [
-            {
-              "type": "PATTERN",
-              "pattern": "^(1|5|10|15|30|60)$",
-              "customMessage": "Allowed values are only: 1, 5, 10, 15, 30, 60."
-            }
-          ],
           "maxItems": 1
         },
         "result_mode": {
