@@ -32,6 +32,7 @@ def structured_query_to_internal(item: Dict[str, Any]) -> Dict[str, Any]:
     query: Dict[str, Any] = {
         "name": name,
         "enabled": bool(item.get("enabled", True)),
+        "run_immediately": bool(item.get("run_immediately", False)),
         "frequency_minutes": _coerce_int(
             item.get("frequency_minutes_value", item.get("frequency_minutes")),
             1,

@@ -181,7 +181,7 @@ export DT_API_URL="$DT_ENV_URL"
 
 ## Part 3 — Monitoring configuration
 
-1. **Hub → Extensions → MongoDB Custom Query** (`custom:mongodb-query`, version **0.1.39**)
+1. **Hub → Extensions → MongoDB Custom Query** (`custom:mongodb-query`, version **0.1.40**)
 2. **Add monitoring configuration**
    - Scope: **Environment**
    - ActiveGate group that can reach MongoDB
@@ -212,6 +212,7 @@ Click **Add MongoDB query** for each entry in `custom_integration/queries.json`.
 |--------|---------|
 | Query name | `orders_by_status` |
 | Enabled | `true` |
+| Run immediately | `false` (default); enable to request a run after settings change |
 | Frequency (minutes) | `1`, `5`, `10`, `15`, `30`, or `60` only |
 | Collection | `dt_demo_orders` |
 | Aggregation pipeline (JSON) | JSON array of stages from `queries.json`; `[]` returns documents |
@@ -228,6 +229,46 @@ Leave the MongoDB queries list empty. Generate one line:
 ```
 
 Paste the output into **Advanced: queries JSON**.
+
+### Run immediately (0.1.40)
+
+Each query has a **Run immediately** toggle, OFF by default. Advanced JSON queries
+can use `"run_immediately": true`. When updated settings reach ActiveGate, every
+Enabled query with this toggle ON runs once on the **next monitoring cycle**, even
+if its frequency is not due. The toggle remains ON in the UI. Any settings change
+in the monitoring configuration triggers all ON queries across all its endpoints:
+changing frequency to 30 minutes, adding a fifth query, or editing another endpoint.
+Leaving settings unchanged, saving identical settings, or restarting on the same
+ActiveGate with the same state does not repeat a handled request. Multiple updates
+before a cycle collapse to the latest settings. An OFF state must reach a monitoring
+cycle before turning ON again can request a repeat of earlier identical settings.
+
+Manual execution does not update regular last-run timestamps, even when a scheduled
+run is also due; the regular scheduler resumes on subsequent cycles. Enabled checks,
+read-only restrictions, credentials, timeouts, result limits, deduplication, log
+formats and error reporting still apply. Deduplication can therefore suppress rows
+from a successful manual execution.
+
+The installed SDK exposes no supported configuration revision/update identifier.
+Detection hashes stable JSON serialization of the SDK's actual `ActivationConfig.config`
+(all endpoints), plus its public version, enabled, description and feature-set values;
+it does not serialize the empty inherited dict. Handled state uses a separate
+`manual_request_state` table in the existing local SQLite database, without changing
+scheduler or dedup tables. Only SHA-256 fingerprints are stored for manual requests,
+never credentials or complete settings. Identity includes the SDK monitoring
+configuration ID, endpoint position/host/port/database, and unique query name.
+Renaming a query, moving/changing an endpoint's identity, deleting state, or switching
+ActiveGates can make a request new. Local state may not follow execution to another
+ActiveGate. The SDK must supply `monitoring_config_id`; missing identity or a state
+write failure is reported as an endpoint setup error rather than risking replay.
+
+Requests are **committed before connecting to MongoDB or executing queries**.
+Connection/query failures do not retry the manual request every cycle. An interruption
+after that commit may lose the requested execution (or remaining executions on that
+endpoint); this is the consume-before-execution tradeoff. Change settings again to
+request another run. Normal scheduled retries continue according to existing behavior.
+Unobserved intermediate settings, including OFF, cannot be detected without a revision
+stream. Credential-vault value changes also count if the resolved SDK settings change.
 
 ### 3.3 Sample queries reference
 
@@ -346,13 +387,13 @@ source .venv/bin/activate
 
 Update the monitoring configuration to the new version in the Dynatrace UI.
 
-MongoDB connection settings: set **Authentication database** to the database where the user was created (often `admin`); blank uses **Database name**. Enable **TLS** when required, and optionally provide a **TLS CA certificate file** path available on ActiveGate. Host accepts a hostname or MongoDB connection URI. Credentials stay in Credential Vault or the existing secret field. Do not put passwords in the host field.
+MongoDB connection settings: set **Authentication database** to the database where the user was created (often `admin`); blank uses **Database name**. TLS fields are hidden from the monitoring UI; existing TLS configuration values remain supported by the runtime. Host accepts a hostname or MongoDB connection URI. Credentials stay in Credential Vault or the existing secret field. Do not put passwords in the host field.
 
 The collector keeps the existing frequencies, dedup modes, row limits, result modes and log delivery. SQLite remains the local state store. MongoDB aggregation stages `$out` and `$merge` are rejected. BSON ObjectId and Decimal128 values become strings; nested values retain the existing JSON-string formatting. The connection is checked with `ping` before running queries.
 
 `connection_test` reads one demo document; an empty collection produces the existing zero-row summary. `orders_last_hour` returns no documents when there are no matching orders, also producing the zero-row summary.
 
-## Dependency packaging (0.1.39)
+## Dependency packaging (0.1.40)
 
 The SDK defaults to CPython 3.10. `custom_integration/build.sh` explicitly downloads
 binary dependencies for CPython **3.10 and 3.14**, for Linux **x86_64 and aarch64**.
@@ -375,7 +416,7 @@ extension and PyMongo native modules, and checks offline resolution for all four
 bundled runtime/architecture combinations:
 
 ```bash
-python3.14 scripts/validate_offline_package.py custom_integration/dist/custom_mongodb-query-0.1.39.zip
+python3.14 scripts/validate_offline_package.py custom_integration/dist/custom_mongodb-query-0.1.40.zip
 ```
 
 Cross-platform pip resolution checks do not execute native code for the other CPU

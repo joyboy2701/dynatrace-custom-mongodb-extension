@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mongodb_custom_query",
-    version="0.1.39",
+    version="0.1.40",
     description="MongoDB Custom Query Dynatrace Extension",
     packages=find_packages(),
     python_requires=">=3.10",

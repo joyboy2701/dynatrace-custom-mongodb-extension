@@ -215,18 +215,6 @@
           "type": "text",
           "nullable": true,
           "maxItems": 1
-        },
-        "tls": {
-          "displayName": "Enable TLS",
-          "type": "boolean",
-          "nullable": true,
-          "maxItems": 1
-        },
-        "tls_ca_file": {
-          "displayName": "TLS CA certificate file",
-          "type": "text",
-          "nullable": true,
-          "maxItems": 1
         }
       }
     },
@@ -340,6 +328,14 @@
               "maxLength": 10000
             }
           ],
+          "maxItems": 1
+        },
+        "run_immediately": {
+          "displayName": "Run immediately",
+          "description": "Run once on the next monitoring cycle after settings change. Leaving ON does not run every cycle or change the regular schedule.",
+          "type": "boolean",
+          "nullable": false,
+          "default": false,
           "maxItems": 1
         }
       }

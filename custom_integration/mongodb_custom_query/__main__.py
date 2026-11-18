@@ -8,6 +8,7 @@ from mongodb_custom_query.collector_core import (
     mark_query_ran,
 )
 from mongodb_custom_query.config_from_endpoint import config_from_endpoint
+from mongodb_custom_query.manual_requests import activation_fingerprint, consume_requests, fingerprint
 
 
 class MongoDBCustomQueryExtension(Extension):
@@ -25,7 +26,8 @@ class MongoDBCustomQueryExtension(Extension):
             self.logger.warning("No endpoints in monitoring configuration")
             return
 
-        for endpoint in endpoints:
+        revision = activation_fingerprint(self.activation_config)
+        for index, endpoint in enumerate(endpoints):
             label = (
                 f"{endpoint.get('host')}:"
                 f"{endpoint.get('port', 27017)}/"
@@ -33,7 +35,7 @@ class MongoDBCustomQueryExtension(Extension):
             )
 
             try:
-                self._run_endpoint(endpoint, label)
+                self._run_endpoint(endpoint, label, revision, index)
             except Exception as error:
                 self.logger.error(f"Endpoint {label} failed before query execution: {error}")
                 self._report_endpoint_failure(endpoint, label, error, config=None)
@@ -91,12 +93,18 @@ class MongoDBCustomQueryExtension(Extension):
             send_immediately=True,
         )
 
-    def _run_endpoint(self, endpoint: dict, label: str):
+    def _run_endpoint(self, endpoint: dict, label: str, revision: str, index: int):
         config = config_from_endpoint(endpoint)
 
         db_config = config["database"]
         collector_config = config["collector"]
         queries = config["queries"]
+
+        endpoint_id = fingerprint([index, endpoint.get("host"), endpoint.get("port", 27017),
+                                   endpoint.get("database_name")])
+        manual = consume_requests(
+            collector_config, self.monitoring_config_id, endpoint_id, queries, revision,
+        )
 
         self.logger.info(f"{label}: running {len(queries)} query definition(s)")
 
@@ -116,7 +124,7 @@ class MongoDBCustomQueryExtension(Extension):
                     continue
 
                 try:
-                    if not should_run_query(query, collector_config):
+                    if name not in manual and not should_run_query(query, collector_config):
                         self.logger.info(f"{label} | {name}: skipped because query is not due")
                         continue
 
@@ -162,7 +170,8 @@ class MongoDBCustomQueryExtension(Extension):
                         self.report_log_events(error_payloads, send_immediately=True)
 
                 finally:
-                    mark_query_ran(collector_config, query)
+                    if name not in manual:
+                        mark_query_ran(collector_config, query)
 
         finally:
             connection.close()
