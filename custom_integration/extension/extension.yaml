@@ -1,5 +1,5 @@
 name: custom:mongodb-query
-version: 0.1.43
+version: 0.1.44
 minDynatraceVersion: "1.285"
 author:
   name: "MongoDB Custom Query"

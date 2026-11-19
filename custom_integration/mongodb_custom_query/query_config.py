@@ -41,6 +41,11 @@ def structured_query_to_internal(item: Dict[str, Any]) -> Dict[str, Any]:
         "pipeline": item.get("pipeline", "[]"),
     }
 
+    if "align_to_scheduled_utc_hour" in item:
+        query["align_to_scheduled_utc_hour"] = item["align_to_scheduled_utc_hour"]
+    if item.get("schedule_offset_minutes") is not None:
+        query["schedule_offset_minutes"] = item["schedule_offset_minutes"]
+
     result_mode = item.get("result_mode")
     if result_mode and str(result_mode).strip():
         query["result_mode"] = str(result_mode).strip()

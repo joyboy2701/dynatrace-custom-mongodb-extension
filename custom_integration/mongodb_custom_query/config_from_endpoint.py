@@ -109,5 +109,9 @@ def config_from_endpoint(endpoint: Dict[str, Any]) -> Dict[str, Any]:
         "queries": queries,
     }
 
+    # Preserve the shared delay from older monitoring configurations.
+    if endpoint.get("schedule_offset_minutes") is not None:
+        config["collector"]["schedule_offset_minutes"] = endpoint["schedule_offset_minutes"]
+
     validate_config(config)
     return config

@@ -265,12 +265,35 @@
         },
         "frequency_minutes_value": {
           "displayName": "Frequency",
-          "description": "When Respect frequency_minutes is enabled, hourly schedules run at minute 05 UTC. Weekly runs are Mondays at 00:05 UTC. Monthly runs are on the first day of the month at 00:05 UTC.",
+          "description": "When UTC alignment is enabled, weekly runs are on Mondays and monthly runs are on the first day of the month, during the 00:00 UTC hour.",
           "type": {
             "$ref": "#/enums/QueryFrequency"
           },
           "nullable": false,
           "default": "1",
+          "maxItems": 1
+        },
+        "align_to_scheduled_utc_hour": {
+          "displayName": "Align to the scheduled UTC hour",
+          "description": "Applies to frequencies of one hour or longer when Respect frequency_minutes is enabled. Turn off to run on the next monitoring cycle after saving a new query, then schedule runs by elapsed time since the last scheduled run.",
+          "type": "boolean",
+          "nullable": false,
+          "default": true,
+          "maxItems": 1
+        },
+        "schedule_offset_minutes": {
+          "displayName": "Minutes past the scheduled UTC hour",
+          "description": "Enter a whole number from 0 to 59. For example, 12 runs the query at 12 minutes past each scheduled UTC hour. Applies to frequencies of one hour or longer when UTC alignment and Respect frequency_minutes are enabled.",
+          "type": "integer",
+          "nullable": false,
+          "default": 5,
+          "constraints": [
+            {
+              "type": "RANGE",
+              "minimum": 0,
+              "maximum": 59
+            }
+          ],
           "maxItems": 1
         },
         "result_mode": {

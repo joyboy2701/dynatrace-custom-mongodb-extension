@@ -213,7 +213,7 @@ Click **Add MongoDB query** for each entry in `custom_integration/queries.json`.
 | Query name | `orders_by_status` |
 | Enabled | `true` |
 | Run immediately | `false` (default); enable to request a run after settings change |
-| Frequency (minutes) | `1`, `5`, `10`, `15`, `30`, or `60` only |
+| Frequency | 1, 5, 10, 15, or 30 minutes, 1, 3, 8, or 24 hours, 1 week, or 1 month |
 | Collection | `dt_demo_orders` |
 | Aggregation pipeline (JSON) | JSON array of stages from `queries.json`; `[]` returns documents |
 | Dedup enabled | `true` |
@@ -229,6 +229,19 @@ Leave the MongoDB queries list empty. Generate one line:
 ```
 
 Paste the output into **Advanced: queries JSON**.
+
+### Hourly and longer schedules
+
+Each MongoDB query has **Align to the scheduled UTC hour** enabled by default.
+With **Respect frequency_minutes** enabled, set **Minutes past the scheduled UTC
+hour** to a whole number from 0 to 59. The default is 5. Entering 12 runs hourly
+queries at :12 UTC, weekly queries on Mondays at 00:12 UTC, and monthly queries on
+the first day of the month at 00:12 UTC.
+
+Turn alignment off to run a new query on the next monitoring cycle and then
+schedule it by elapsed time since the last scheduled run. In this mode, a monthly
+frequency is 30 days. In Advanced JSON, use `"align_to_scheduled_utc_hour": false`
+to turn alignment off or `"schedule_offset_minutes": 12` to set its delay.
 
 ### Run immediately (0.1.40)
 

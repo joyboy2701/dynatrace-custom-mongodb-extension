@@ -14,6 +14,7 @@ from bson.decimal128 import Decimal128
 from bson.objectid import ObjectId
 
 COLLECTOR_VERSION = "0.5.2"
+DEFAULT_SCHEDULE_OFFSET_MINUTES = 5
 WEEKLY_FREQUENCY = 10080
 MONTHLY_FREQUENCY = 43200
 ALLOWED_FREQUENCIES_MINUTES = [
@@ -75,6 +76,22 @@ def sha256_hash(value: Any) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def query_schedule_offset_minutes(query_config: Dict[str, Any], collector_config: Dict[str, Any]) -> int:
+    value = query_config.get("schedule_offset_minutes")
+    if value is None:
+        value = collector_config.get("schedule_offset_minutes", DEFAULT_SCHEDULE_OFFSET_MINUTES)
+
+    try:
+        offset = int(str(value).strip())
+    except ValueError:
+        offset = -1
+    if not 0 <= offset <= 59:
+        raise ValueError(
+            f"Schedule delay for query '{query_config['name']}' must be a whole number from 0 to 59."
+        )
+    return offset
+
+
 def validate_config(config: Dict[str, Any]):
     if not config:
         raise ValueError("configuration is empty")
@@ -106,6 +123,9 @@ def validate_config(config: Dict[str, Any]):
 
         if not query.get("collection"):
             raise ValueError(f"queries[{index}] requires collection")
+        if not isinstance(query.get("align_to_scheduled_utc_hour", True), bool):
+            raise ValueError(f"queries[{index}] UTC alignment must be true or false")
+        query_schedule_offset_minutes(query, config.get("collector", {}))
         validate_pipeline(query.get("pipeline", []))
 
         query_name = query["name"]
@@ -263,8 +283,8 @@ def should_run_query(query_config: Dict[str, Any], collector_config: Dict[str, A
       every enabled query runs every time the script runs.
 
     If run_due_only=true:
-      hourly and calendar frequencies run during minute 05 of their scheduled UTC hour.
-      shorter frequencies use elapsed time since the last run.
+      hourly and calendar frequencies with UTC alignment use the configured minute
+      of their scheduled UTC hour. Other queries use elapsed time since the last run.
     """
 
     allowed_frequencies = collector_config.get(
@@ -297,9 +317,13 @@ def should_run_query(query_config: Dict[str, Any], collector_config: Dict[str, A
 
     query_name = query_config["name"]
 
-    if frequency_minutes >= 60 and frequency_minutes % 60 == 0:
+    if (
+        query_config.get("align_to_scheduled_utc_hour", True)
+        and frequency_minutes >= 60
+        and frequency_minutes % 60 == 0
+    ):
         now = datetime.datetime.now(datetime.timezone.utc)
-        if now.minute != 5:
+        if now.minute != query_schedule_offset_minutes(query_config, collector_config):
             return False
 
         if frequency_minutes == WEEKLY_FREQUENCY:
